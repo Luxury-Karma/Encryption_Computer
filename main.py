@@ -110,6 +110,21 @@ def decrypt_file(file_path:str, F_key:Fernet):
         ef.write(ddata)
     ef.close()
 
+def Get_Key_from_file(file_to_key:str):
+    data = ''
+    with open(file_to_key,'r') as password :
+        data = password.read()
+    data = data.strip('Key : ')
+    return Fernet(data.encode())
+
+#write the key in a file
+def key_memory(F_keys:[]):
+    with  open('password.txt', 'w') as txt:
+        for e in F_keys:
+            txt.write(f'Key : {e.decode()}')
+
+
+
 
 """def encrypt_file(file_path,F_key):
     print(f'Encrypthing File : {file_path}')
@@ -141,11 +156,12 @@ for i in range(1):
 test = input("press enter to remove encryption")
 num = len(keys)
 
-with  open('password.txt','w') as txt:
-    for e in keys:
-        txt.write(f'Key : {e.decode()}')
+
+key_memory(keys)
+
+the_word = Get_Key_from_file('password.txt')
 while num > 0:
     for e in files :
-        decrypt_file(e, Fernet(keys[num - 1]))
+        decrypt_file(e, the_word)
     num = num - 1
 
