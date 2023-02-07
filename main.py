@@ -22,6 +22,7 @@ def get_all_accessible_files_in_Dir(init_path:str):
     '''find all the folder it can
     :param:return: return all the folder it could find
     '''
+    init_path = f'{init_path}\\'
     files = []
     try:
         for path in os.listdir(init_path):
@@ -127,13 +128,24 @@ def decrypt_file(file_path:str, F_key:Fernet):
 
 
 keys = []
+ash = []
+files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
 folder_to_encrypt = '.\\encrypt_thing\\WAS2_Subnet_worksheet.docx'
 for i in range(1):
-    cipher = Fernet(Fernet.generate_key())
-    encrypt_file(folder_to_encrypt, cipher)
-    keys.append(cipher)
+    key = Fernet.generate_key() # key generator
+    cipher = Fernet(key) # hash the key
+    print(f'Key : {key.decode()}')
+    for e in files:
+        encrypt_file(e, cipher)
+    keys.append(key)
 test = input("press enter to remove encryption")
 num = len(keys)
+
+with  open('password.txt','w') as txt:
+    for e in keys:
+        txt.write(f'Key : {e.decode()}')
 while num > 0:
-    decrypt_file(folder_to_encrypt, keys[num - 1])
+    for e in files :
+        decrypt_file(e, Fernet(keys[num - 1]))
     num = num - 1
+
