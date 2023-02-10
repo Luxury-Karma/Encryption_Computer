@@ -28,8 +28,15 @@ def salt_password(password:str, salt:str):
     return  password+salt
 
 
-def password_unlock():
-    pass
+def password_unlock(password_given:str, password_supposed : str):
+    hashen_given  = hashlib.md5(password_given.encode())
+    if str(hashen_given) == password_supposed:
+        pass
+    else:
+        print(f'Wront Pass_word: {password_given}')
+
+
+
 def password_lock(password:str):
     '''
     :param password: the password to lock the computer
