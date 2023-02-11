@@ -51,17 +51,13 @@ def password_hash(salted_password:str):
     '''
     return hashlib.md5(salted_password.encode())
 
-def password_keep(hashed_password:str):
-    '''
-    :param hashed_password: hashed password to add to the file
-    :return: a file with hashed password
-    '''
-    file_to_oppen = '.\\password.txt',
+
+def account_creation(username:str,hashed_password:str):
+    file_to_oppen = '.\\Account.txt',
     with open(file_to_oppen,'r') as txt:
         data = txt.read()
     with open(file_to_oppen,'w') as txt:
-        txt.write(data+'\n pass: ' +hashed_password)
-
+        txt.write(f'Username: {username} password: {hashed_password}')
 
 
 
@@ -204,6 +200,9 @@ def main():
     salt = ''
     # Look if program is admin
     if is_admin():
+        input('New username')
+        input('New Password')
+        account_creation()
         keys = []
         files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
         own_dir = os.getcwd() # get is own directory to not encrypt it self
