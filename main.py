@@ -53,9 +53,10 @@ def password_hash(salted_password:str):
 
 
 def account_creation(username:str,hashed_password:str):
-    file_to_oppen = '.\\Account.txt',
+    file_to_oppen:str = 'Account.txt'
     with open(file_to_oppen,'r') as txt:
         data = txt.read()
+        print(data)
     with open(file_to_oppen,'w') as txt:
         txt.write(f'Username: {username} password: {hashed_password}')
 
@@ -197,36 +198,38 @@ def key_memory(F_keys:[]):
 
 
 def main():
-    salt = ''
+    salt = 'adc1'
     # Look if program is admin
-    if is_admin():
-        input('New username')
-        input('New Password')
-        account_creation()
-        keys = []
-        files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
-        own_dir = os.getcwd() # get is own directory to not encrypt it self
-        for i in range(1):
-            key = Fernet.generate_key() # key generator
-            cipher = Fernet(key) # hash the key
-            print(f'Key : {key.decode()}')
-            for e in files:
-                if e is not own_dir:
-                    encrypt_file(e, cipher) # the file it receive
-            keys.append(key)
-        test = input("press enter to remove encryption")
+    #if is_admin():
+    user = input('New username')
+    password = input('New Password')
+
+    account_creation(user,password_hash(password).hexdigest())
+
+
+    keys = []
+    files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
+    own_dir = os.getcwd() # get is own directory to not encrypt it self
+    for i in range(1):
+        key = Fernet.generate_key() # key generator
+        cipher = Fernet(key) # hash the key
+        print(f'Key : {key.decode()}')
+        for e in files:
+            if e is not own_dir:
+                encrypt_file(e, cipher) # the file it receive
+        keys.append(key)
+    if password_hash(password).hexdigest() == password_hash(input('You want the file give me the password: ')).hexdigest():
+        print('work')
         num = len(keys)
-
         key_memory(keys)
-
-        the_word = Get_Key_from_file('password.txt')
+        the_word = Get_Key_from_file('key.txt')
         while num > 0:
             for e in files :
                 decrypt_file(e, the_word)
             num = num - 1
-    else:
+    #else:
         # Re-run the program with admin rights
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+        #ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
 
 
 if __name__ == "__main__":
