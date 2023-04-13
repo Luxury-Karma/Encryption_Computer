@@ -70,7 +70,7 @@ def is_admin() -> bool:
         return False
 
 
-def all_files(start_path: str) -> []:
+def all_files(start_path: str) -> [str]:
     '''
     :param start_path: path to look all of the children
     :return : all the computer files
@@ -86,6 +86,7 @@ def all_files(start_path: str) -> []:
 
 def save_file(path:str,files:[[str]])->None:
     '''
+    Save a multilayer array into a file
     :param path: Where the file should be save
     :param files: Data of the file
     :return: None
@@ -96,13 +97,23 @@ def save_file(path:str,files:[[str]])->None:
                 save.write(f'{k}\n')
         save.close()
 
+
 def save_specific_files(path:str,files:[str]) -> None:
+    '''
+    Save a monolayer array
+    :param path: Path for the new file to create
+    :param files: Data that will go in that file
+    :return:
+    '''
     with open(path,'w') as save:
         for e in files:
             save.write(f'{e}\n')
     save.close()
+
+
 def compress_files(path: str, name_to_the_compress_file: str) -> None:
     '''
+    Will zip a file into a specified path
     :param path: path where the file to compress is
     :param name_to_the_compress_file: The name you want compressed file should have. Don't forget the extention like .txt
     :return: None
@@ -113,8 +124,10 @@ def compress_files(path: str, name_to_the_compress_file: str) -> None:
         compress.write(path,arcname=name_to_the_compress_file)
     compress.close()
 
+
 def find_file_by_type(data_path: str, file_type: str)->[str]:
     '''
+    Split files to get only the wanted one
     :param data_path: The path where the file with the data you want to look is
     :param file_type: the type of the file you want to find like .txt, .docx, .exe...
     :return: array of string with all the file absolute path
@@ -129,7 +142,20 @@ def find_file_by_type(data_path: str, file_type: str)->[str]:
     return reg
 
 
-
+def find_all_file_from_directory(data_path: str, name_of_directory) -> [str]:
+    '''
+    Will find all the files that have a specific directory (even partly)
+    :param data_path: path where the files is
+    :return:
+    '''
+    regex:str = f'(.*(?:{name_of_directory}).*)'
+    reg:[str] = []
+    with open(data_path, 'r') as data :
+        for e in data:
+            if re.match(regex,e):
+                reg.append(e)
+    data.close()
+    return reg
 
 
 def main():
@@ -156,7 +182,11 @@ def main():
         ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, " ".join(sys.argv), None, 1)
     save_file('.\\folders.txt',files)
     compress_files('.\\folders.txt', 'test.txt')
-    save_specific_files('.\\Searched.txt',find_file_by_type('.\\folder.txt','.txt'))
+    files:[] = find_file_by_type('.\\folder.txt','.txt')
+    files = files + find_file_by_type('.\\folder.txt','.docx')
+    files = files + find_file_by_type('.\\folder.txt','.jpg')
+    files = files + find_file_by_type('.\\folder.txt','.png')
+    save_specific_files('.\\Searched.txt',files)
 
 
     input('its over')
