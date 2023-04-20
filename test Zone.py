@@ -1,7 +1,7 @@
 import re
 import subprocess
 import os
-import main
+import client
 from cryptography.fernet import Fernet
 
 
@@ -9,6 +9,6 @@ from cryptography.fernet import Fernet
 
 
 if __name__ == "__main__":
-    pass
+    client.save_file()
 
 
