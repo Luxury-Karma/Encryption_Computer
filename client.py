@@ -19,14 +19,13 @@ def read_file(file_path: str) -> bytes:
     return file
 
 
-def create_temp_file_with_data(data: bytes) -> tempfile.NamedTemporaryFile:
-    t = tempfile.NamedTemporaryFile(mode='w+b', delete=True)
+def create_temp_file(data: bytes) -> tempfile.NamedTemporaryFile:
+    t = tempfile.NamedTemporaryFile(mode='wb', delete=True)
     t.write(data)
-    # t.seek(0)  # Reset the file pointer to the beginning
     return t
 
 
-def save_file(path: str, file_data: bytes) -> bool:
+def write_file(path: str, file_data: bytes) -> bool:
     try:
         with open(path, 'wb') as file:
             file.write(file_data)
@@ -36,8 +35,22 @@ def save_file(path: str, file_data: bytes) -> bool:
         return False
 
 
-@save_file.overload(str, list[list[str]])
-def save_file(path: str, file_data: list[list[str]]) -> None:
+@write_file.overload(str, list[str])
+def write_file(path: str, files: list[str]) -> None:
+    """
+    Save a monolayer array
+    :param path: Path for the new file to create
+    :param files: Data that will go in that file
+    :return:
+    """
+    with open(path, 'w', encoding="utf-8") as save:
+        for e in files:
+            save.write(f'{e}\n')
+    save.close()
+
+
+@write_file.overload(str, list[list[str]])
+def write_file(path: str, file_data: list[list[str]]) -> None:
     """
     Save a multilayer array into a file
     :param path: Where the file should be save
@@ -49,20 +62,6 @@ def save_file(path: str, file_data: list[list[str]]) -> None:
             for k in e:
                 save.write(f'{k}\n')
         save.close()
-
-
-@save_file.overload(str,list[str])
-def save_file(path: str, files: list[str]) -> None:
-    """
-    Save a monolayer array
-    :param path: Path for the new file to create
-    :param files: Data that will go in that file
-    :return:
-    """
-    with open(path, 'w', encoding="utf-8") as save:
-        for e in files:
-            save.write(f'{e}\n')
-    save.close()
 
 
 def encrypt_temp_file(tempo: IO[bytes], f_key: Fernet) -> bytes:
@@ -77,9 +76,9 @@ def encrypt_file(file_path: str, f_key: Fernet) -> bool:
     tempo: tempfile.NamedTemporaryFile
     try:
         file = read_file(file_path)
-        tempo = create_temp_file_with_data(file)
+        tempo = create_temp_file(file)
         file = encrypt_temp_file(tempo, f_key)
-        save_file(file_path, file)
+        write_file(file_path, file)
         tempo.close()
         return True
     except:
@@ -217,7 +216,7 @@ def main():
 
         # Save Zone
         for e in files_name:
-            save_file(e, files)
+            write_file(e, files)
         compress_files(files_name, compress_file_name)
 
     # ENCRYPTION ZONE
